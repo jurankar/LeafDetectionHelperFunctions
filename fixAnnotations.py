@@ -29,19 +29,27 @@ def del_broken_files(dir, extenstion):
 # Change names of files that are too long (they are problematic lol weak os cant handle 256char len strings)
 def rename_long_name_files(DATA_DIR, max_file_name_length=120):
     counter = 0
-    for dir1_name in DIR_NAMES:
-        for dir2_name in DIR_NAMES:
-            dir_path = os.path.join(DATA_DIR, dir1_name, dir2_name)
-            if os.path.isdir(dir_path):
-                for file_name in os.listdir(dir_path):
-                    old_file_name = os.path.join(dir_path, file_name)
-                    new_file_name = os.path.join(dir_path, file_name[(max_file_name_length - 1):])
-                    if len(file_name) > max_file_name_length and not os.path.isfile(new_file_name):
-                        counter += 1
-                        os.rename("\\\\?\\" + old_file_name, new_file_name)
-    print(str(counter) + " files renamed")
+    err_counter = 0
+    dir_path_imgs = os.path.join(DATA_DIR, "images", "train")
+    dir_path_lab = os.path.join(DATA_DIR, "labels", "train")
+    for file_name in os.listdir(dir_path_imgs):
+        # print(len(file_name))
+        if len(file_name) > max_file_name_length:
+            old_file_name_lab = os.path.join(dir_path_lab, file_name[: -3]) + "txt"
+            lable_file_new_name = file_name[-(max_file_name_length - 1): -3] + "txt"
+            new_file_name_lab = os.path.join(dir_path_lab, lable_file_new_name)
+
+            old_file_name_img = os.path.join(dir_path_imgs, file_name)
+            new_file_name_img = os.path.join(dir_path_imgs, file_name[-(max_file_name_length - 1):])
+            os.rename("\\\\?\\" + old_file_name_lab, new_file_name_lab)
+            os.rename("\\\\?\\" + old_file_name_img, new_file_name_img)
+            counter += 1
+            #    err_counter += 1
+    print(str(counter) + " files renamed           err_counter: " + str(err_counter))
 
 
+
+# Changes all classes to 0 (if we only wanna detect leafs)
 def change_classes_to_0(DATA_DIR):
     rename_long_name_files(DATA_DIR)  # change file names
     # start algo
@@ -80,6 +88,7 @@ def change_classes_to_0(DATA_DIR):
     print("Changed classes for :" + str(counter) + " annotations")
 
 
+# we chehck all labels are 0 --> only needed for leaf detection
 def check_all_is_0_class(source_path):
     counter = 0
     source_pahts = [os.path.join(source_path, "labels", "train"), os.path.join(source_path, "labels", "val")]
@@ -141,6 +150,7 @@ def change_classes_to_0_1(DATA_DIR, healty_classes):
     print("FINISHED CHANGE_CLASSES_0_1")
 
 
+# Counts how much of each class are in labels (how many times each class appears)
 def each_annotation_count(DATA_DIR):
     annotation_lables_count = {}
     for dir1_name in DIR_NAMES:
@@ -197,6 +207,7 @@ def del_images_bellow_n_labels(DATA_DIR, min_num_of_labels):
     for idx, file_path in enumerate(os.listdir(LABELS_DIR)):
         file_name = file_path.split("/")[-1]
         file_source_path = os.path.join(LABELS_DIR, file_name)
+        # print(len(file_source_path))
         f = open(file_source_path, "r")
         f_lines = f.readlines()
         f.close()
@@ -206,12 +217,10 @@ def del_images_bellow_n_labels(DATA_DIR, min_num_of_labels):
             file_name_split = file_name.split(".")
             file_name_split.pop()
             img_file_name = ".".join(file_name_split) + ".jpg"
-            try:
-                os.remove(os.path.join(IMGS_DIR, img_file_name))
-                os.remove(os.path.join(LABELS_DIR, file_name))
-                del_counter += 1
-            except:
-                err_counter += 1
+            print(len(img_file_name))
+            os.remove(os.path.join(IMGS_DIR, img_file_name))
+            os.remove(os.path.join(LABELS_DIR, file_name))
+            del_counter += 1
 
     print("Deleted pictures: " + str(del_counter) + "      Err counter: " + str(err_counter))
     count_labels_on_picture(DATA_DIR)
@@ -233,4 +242,5 @@ if __name__ == '__main__':
     # healty_classes = [1, 3, 5, 6, 10, 11, 14, 15, 17, 20, 27]
     # run_change_classes_to_0_1(DATA_DIR, healty_classes)
     # del_broken_files(os.path.join(DATA_DIR, "labels", "train"), "txt")
+    rename_long_name_files(DATA_DIR)
     del_images_bellow_n_labels(DATA_DIR, 3)
