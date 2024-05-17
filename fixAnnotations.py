@@ -151,7 +151,7 @@ def change_classes_to_0_1(DATA_DIR, healty_classes):
 
 
 # Counts how much of each class are in labels (how many times each class appears)
-def each_annotation_count(DATA_DIR):
+def each_class_count(DATA_DIR):
     annotation_lables_count = {}
     for dir1_name in DIR_NAMES:
         for dir2_name in DIR_NAMES:
@@ -217,7 +217,7 @@ def del_images_bellow_n_labels(DATA_DIR, min_num_of_labels):
             file_name_split = file_name.split(".")
             file_name_split.pop()
             img_file_name = ".".join(file_name_split) + ".jpg"
-            print(len(img_file_name))
+            # print(len(img_file_name))
             os.remove(os.path.join(IMGS_DIR, img_file_name))
             os.remove(os.path.join(LABELS_DIR, file_name))
             del_counter += 1
@@ -230,17 +230,18 @@ def del_images_bellow_n_labels(DATA_DIR, min_num_of_labels):
 # CONVERTS ALL CLASSES TO EITHER SICK(0) OR HEALTY
 def run_change_classes_to_0_1(DATA_DIR, healty_classes):
     rename_long_name_files(DATA_DIR)
-    each_annotation_count(DATA_DIR)
+    each_class_count(DATA_DIR)
     change_classes_to_0_1(DATA_DIR, healty_classes)
-    each_annotation_count(DATA_DIR)
-
-
+    each_class_count(DATA_DIR)
 
 
 if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd(), 'data')
-    # healty_classes = [1, 3, 5, 6, 10, 11, 14, 15, 17, 20, 27]
+    # rename_long_name_files(DATA_DIR)
+    # each_class_count(DATA_DIR)
+    # count_labels_on_picture(DATA_DIR)
+
+    # healty_classes = [1, 5, 6, 10, 11, 14, 15, 17, 20, 27]
     # run_change_classes_to_0_1(DATA_DIR, healty_classes)
-    # del_broken_files(os.path.join(DATA_DIR, "labels", "train"), "txt")
-    rename_long_name_files(DATA_DIR)
     del_images_bellow_n_labels(DATA_DIR, 3)
+
