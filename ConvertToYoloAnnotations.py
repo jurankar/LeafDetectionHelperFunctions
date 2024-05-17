@@ -90,5 +90,4 @@ def draw_squares_repository(img_dir="imgs/", lables_dir="img_anottations/"):
             break
 
 if __name__ == '__main__':
-    # leaf_detection_dataset('img_anottations/train.csv')
-    draw_squares_repository()
+    DATA_DIR = os.path.join(os.getcwd(), 'data')

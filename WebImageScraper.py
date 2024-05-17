@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+import random
 import os
 import time
 
@@ -82,11 +83,30 @@ def run_query(query):
     driver.close()
     time.sleep(30)
 
+# Random browsing to appear active for collab
+def random_browsing():
+    while True:
+        time.sleep(random.randint(15, 32))
+        driver = webdriver.Chrome()
+        time.sleep(random.randint(10, 22))
+        driver.maximize_window()
+        driver.get('https://google.com/')
+        time.sleep(random.randint(20, 50))
+        driver.get('https://www.vreme.si/napoved/Ljubljana/graf')
+        time.sleep(random.randint(190, 270))
+        driver.close()
+        time.sleep(random.randint(400, 900))
+
+
 
 
 if __name__ == '__main__':
-    search_queries = ["Mosaic Virus"]
+    # search_queries = ["Mosaic Virus"]
+    # for query in search_queries:
+    #     driver = webdriver.Chrome()
+    #     run_query(query)
 
-    for query in search_queries:
-        driver = webdriver.Chrome()
-        run_query(query)
+    time.sleep(random.randint(15, 32))
+    driver.close()
+    random_browsing()
+

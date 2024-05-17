@@ -14,6 +14,18 @@ def longest_file_path(dir):
     return max_len, longest_str
 
 
+# If the extension is not correct, delete file
+def del_broken_files(dir, extenstion):
+    dir_list = os.listdir(dir)
+    count = 0
+    for idx, file in enumerate(dir_list):
+        if file.split(".")[-1] != extenstion:
+            count += 1
+            print(file)
+            os.remove(os.path.join(dir, file))
+    print(count)
+
+
 # Change names of files that are too long (they are problematic lol weak os cant handle 256char len strings)
 def rename_long_name_files(DATA_DIR, max_file_name_length=120):
     counter = 0
@@ -23,7 +35,7 @@ def rename_long_name_files(DATA_DIR, max_file_name_length=120):
             if os.path.isdir(dir_path):
                 for file_name in os.listdir(dir_path):
                     old_file_name = os.path.join(dir_path, file_name)
-                    new_file_name = os.path.join(dir_path, file_name[:(max_file_name_length - 1)])
+                    new_file_name = os.path.join(dir_path, file_name[(max_file_name_length - 1):])
                     if len(file_name) > max_file_name_length and not os.path.isfile(new_file_name):
                         counter += 1
                         os.rename("\\\\?\\" + old_file_name, new_file_name)
@@ -153,6 +165,60 @@ def each_annotation_count(DATA_DIR):
     print(annotation_lables_count)
     print("FINISHED ANNOTATION LABELS COUNT")
 
+# COUNT NUMBER OF LABELS PER PICTURE (prints dict)
+def count_labels_on_picture(DATA_DIR):
+    LABELS_DIR = os.path.join(DATA_DIR, "labels", "train")
+    num_of_labels_on_img = {}
+
+    # read label.txt and count how many labels on image
+    for idx, file_path in enumerate(os.listdir(LABELS_DIR)):
+        file_name = file_path.split("/")[-1]
+        file_source_path = os.path.join(LABELS_DIR, file_name)
+        f = open(file_source_path, "r")
+        f_lines = f.readlines()
+        if len(f_lines) not in num_of_labels_on_img:
+            num_of_labels_on_img[len(f_lines)] = 1
+        else:
+            num_of_labels_on_img[len(f_lines)] += 1
+        f.close()
+
+    # print number of labels per image dict
+    print(dict(sorted(num_of_labels_on_img.items())))
+
+
+# DELETES ALL IMAGES (AND THEIR LABELS.TXT) IF IT HAS LOWER THAN "min_num_of_labels" number of labels on the picture
+def del_images_bellow_n_labels(DATA_DIR, min_num_of_labels):
+    IMGS_DIR = os.path.join(DATA_DIR, "images", "train")
+    LABELS_DIR = os.path.join(DATA_DIR, "labels", "train")
+    err_counter = 0
+    del_counter = 0
+
+    # read label.txt and count how many labels on image
+    for idx, file_path in enumerate(os.listdir(LABELS_DIR)):
+        file_name = file_path.split("/")[-1]
+        file_source_path = os.path.join(LABELS_DIR, file_name)
+        f = open(file_source_path, "r")
+        f_lines = f.readlines()
+        f.close()
+
+        # if it has less than min_num_of_labels, delete picture and its labelse.txt
+        if len(f_lines) < min_num_of_labels:
+            file_name_split = file_name.split(".")
+            file_name_split.pop()
+            img_file_name = ".".join(file_name_split) + ".jpg"
+            try:
+                os.remove(os.path.join(IMGS_DIR, img_file_name))
+                os.remove(os.path.join(LABELS_DIR, file_name))
+                del_counter += 1
+            except:
+                err_counter += 1
+
+    print("Deleted pictures: " + str(del_counter) + "      Err counter: " + str(err_counter))
+    count_labels_on_picture(DATA_DIR)
+
+
+
+# CONVERTS ALL CLASSES TO EITHER SICK(0) OR HEALTY
 def run_change_classes_to_0_1(DATA_DIR, healty_classes):
     rename_long_name_files(DATA_DIR)
     each_annotation_count(DATA_DIR)
@@ -160,7 +226,11 @@ def run_change_classes_to_0_1(DATA_DIR, healty_classes):
     each_annotation_count(DATA_DIR)
 
 
+
+
 if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd(), 'data')
-    healty_classes = [1, 3, 5, 6, 10, 11, 14, 15, 17, 20, 27]
-    run_change_classes_to_0_1(DATA_DIR, healty_classes)
+    # healty_classes = [1, 3, 5, 6, 10, 11, 14, 15, 17, 20, 27]
+    # run_change_classes_to_0_1(DATA_DIR, healty_classes)
+    # del_broken_files(os.path.join(DATA_DIR, "labels", "train"), "txt")
+    del_images_bellow_n_labels(DATA_DIR, 3)
