@@ -52,7 +52,22 @@ def resize_images(DATA_DIR):
 
     print("Num of errors: " + str(err_counter))
 
+def del_imgs_no_label(IMG_DIR, LABEL_DIR):
+    dir_list = os.listdir(IMG_DIR)
+    counter = 0
+    for img_file in dir_list:
+        label_file_name = img_file.split(".")[0] + ".txt"
+        label_file_path = os.path.join(LABEL_DIR, label_file_name)
+        if not os.path.exists(label_file_path):
+            img_file_path = os.path.join(IMG_DIR, img_file)
+            os.remove(img_file_path)
+            counter += 1
+
+    print(counter)
+
+
 if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd(), 'data')
     IMG_DIR = os.path.join(DATA_DIR, 'images', "train")
-    resize_images(DATA_DIR)
+    LABEL_DIR = os.path.join(DATA_DIR, 'labels', "train")
+    del_imgs_no_label(IMG_DIR, LABEL_DIR)

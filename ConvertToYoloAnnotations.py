@@ -51,9 +51,10 @@ def leaf_detection_dataset(csv_file_path, dataset_name="leaf_detection"):
                 f = open(txt_file_name, "a")
                 f.write(annotation)
                 f.close()
-def corn_disease_drone_images(csv_file_path, images_path, new_labels_path):
+def corn_disease_drone_images(csv_file_path, images_path, new_labels_path, data_set_name):
     # Corn dataset drone images
     # https://www.kaggle.com/datasets/alexanderyevchenko/corn-disease-drone-images
+    # https://www.kaggle.com/datasets/qramkrishna/corn-leaf-infection-dataset
 
     # Import csv file
     # # format of csv file: img_name, x1,y1, x2, y2, ....
@@ -64,6 +65,7 @@ def corn_disease_drone_images(csv_file_path, images_path, new_labels_path):
     if not os.path.exists(new_labels_path):
         os.makedirs(new_labels_path)
 
+    num_of_clases = [0,0]
     with open(csv_file_path) as file:
         csv_file = csv.reader(file)
         for idx, line in enumerate(csv_file):
@@ -83,14 +85,21 @@ def corn_disease_drone_images(csv_file_path, images_path, new_labels_path):
                 y_center = min(y1, y2) + label_height/2
 
                 # Get img height and width
-                img_path = os.path.join(images_path, img_name)
+                if os.path.exists(os.path.join(images_path, "Healthy", img_name)):
+                    img_path = os.path.join(images_path, "Healthy", img_name)
+                    label_class = 1
+                elif os.path.exists(os.path.join(images_path, "Infected", img_name)):
+                    img_path = os.path.join(images_path, "Infected", img_name)
+                    label_class = 0
+
+                num_of_clases[label_class] += 1
                 img = Image.open(img_path)
                 img_width = img.width
                 img_height = img.height
 
                 # Convert to yolov9 annotation
                 if x1+x2+y1+y2 > 0: # if all are set to 0 than it is a background and we dont need an annotation
-                    converted_label = "0 " + str(x_center/img_width) + " " + str(y_center/img_height) + " " + str(label_width/img_width) + " " + str(label_height/img_height) + "\n"
+                    converted_label = str(label_class) + " " + str(x_center/img_width) + " " + str(y_center/img_height) + " " + str(label_width/img_width) + " " + str(label_height/img_height) + "\n"
 
                     # Write annotation to file
                     label_file_name = img_name.split(".")[0] + ".txt"
@@ -98,6 +107,7 @@ def corn_disease_drone_images(csv_file_path, images_path, new_labels_path):
                     file1 = open(label_file_path, "a")  # append mode
                     file1.write(converted_label)
                     file1.close()
+        print(num_of_clases)
 
 def draw_squares_on_img(img_path, lables_path):
     # read image
@@ -115,7 +125,7 @@ def draw_squares_on_img(img_path, lables_path):
     f_lines = f.readlines()
     f.close()
 
-    for line in f_lines:
+    for idx, line in enumerate(f_lines):
       annotation = line.replace("\n", "").split(" ")
       annot_width = float(annotation[3])*img_width
       annot_height = float(annotation[4])*img_height
@@ -128,18 +138,19 @@ def draw_squares_on_img(img_path, lables_path):
       ax.add_patch(rect)
     plt.show()
 
-def draw_squares_repository(img_dir="imgs/", lables_dir="img_anottations/"):
+def draw_squares_repository(img_dir, lables_dir, num_of_imgs=10):
     dir_list = os.listdir(img_dir)
     for idx, file in enumerate(dir_list):
         file = file.replace(".jpg", "")
         file = file.replace(".JPG", "")
         draw_squares_on_img(img_dir + file + ".jpg", lables_dir + file + ".txt")
-        if idx == 10:
+        if idx == num_of_imgs:
             break
 
 if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd(), 'data')
     IMG_DIR = os.path.join(DATA_DIR, 'images', "train")
     LABEL_DIR = os.path.join(DATA_DIR, 'labels', "train")
-    corn_labels_csv = os.path.join(DATA_DIR, 'DRONE_IMAGES_ANNOTATION.csv')
-    corn_disease_drone_images(corn_labels_csv, IMG_DIR, LABEL_DIR)
+    corn_labels_csv = os.path.join(DATA_DIR, 'Annotation-export.csv')
+    corn_disease_drone_images(corn_labels_csv, IMG_DIR, LABEL_DIR, "Corn Leaf Infection Dataset")
+    # draw_squares_repository(IMG_DIR, LABEL_DIR, 10)
