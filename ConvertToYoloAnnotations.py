@@ -89,14 +89,15 @@ def corn_disease_drone_images(csv_file_path, images_path, new_labels_path):
                 img_height = img.height
 
                 # Convert to yolov9 annotation
-                converted_label = "0 " + str(x_center/img_width) + " " + str(y_center/img_height) + " " + str(label_width/img_width) + " " + str(label_height/img_height)
+                if x1+x2+y1+y2 > 0: # if all are set to 0 than it is a background and we dont need an annotation
+                    converted_label = "0 " + str(x_center/img_width) + " " + str(y_center/img_height) + " " + str(label_width/img_width) + " " + str(label_height/img_height) + "\n"
 
-                # Write annotation to file
-                label_file_name = img_name.split(".")[0] + ".txt"
-                label_file_path = os.path.join(new_labels_path, label_file_name)
-                file1 = open(label_file_path, "a")  # append mode
-                file1.write(converted_label)
-                file1.close()
+                    # Write annotation to file
+                    label_file_name = img_name.split(".")[0] + ".txt"
+                    label_file_path = os.path.join(new_labels_path, label_file_name)
+                    file1 = open(label_file_path, "a")  # append mode
+                    file1.write(converted_label)
+                    file1.close()
 
 def draw_squares_on_img(img_path, lables_path):
     # read image
