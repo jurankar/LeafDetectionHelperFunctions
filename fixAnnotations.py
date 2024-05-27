@@ -237,11 +237,11 @@ def run_change_classes_to_0_1(DATA_DIR, healty_classes):
 
 if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd(), 'data')
-    # rename_long_name_files(DATA_DIR)
-    # each_class_count(DATA_DIR)
-    # count_labels_on_picture(DATA_DIR)
+    rename_long_name_files(DATA_DIR)
+    each_class_count(DATA_DIR)
+    count_labels_on_picture(DATA_DIR)
 
-    # healty_classes = [1, 5, 6, 10, 11, 14, 15, 17, 20, 27]
-    # run_change_classes_to_0_1(DATA_DIR, healty_classes)
+    healty_classes = [3]
+    run_change_classes_to_0_1(DATA_DIR, healty_classes)
     del_images_bellow_n_labels(DATA_DIR, 3)
 

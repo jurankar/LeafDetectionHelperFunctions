@@ -1,6 +1,7 @@
 import csv
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import shutil
 from PIL import Image
 import os
 
@@ -50,6 +51,52 @@ def leaf_detection_dataset(csv_file_path, dataset_name="leaf_detection"):
                 f = open(txt_file_name, "a")
                 f.write(annotation)
                 f.close()
+def corn_disease_drone_images(csv_file_path, images_path, new_labels_path):
+    # Corn dataset drone images
+    # https://www.kaggle.com/datasets/alexanderyevchenko/corn-disease-drone-images
+
+    # Import csv file
+    # # format of csv file: img_name, x1,y1, x2, y2, ....
+    # yolov9 format is: class x_center y_center width height
+
+    if os.path.exists(new_labels_path):
+        shutil.rmtree(new_labels_path)
+    if not os.path.exists(new_labels_path):
+        os.makedirs(new_labels_path)
+
+    with open(csv_file_path) as file:
+        csv_file = csv.reader(file)
+        for idx, line in enumerate(csv_file):
+            if idx % 3000 == 0:
+                print(idx)
+            if idx != 0:
+                # Get lable values
+                img_name = str(line[0])
+                x1 = float(line[1])
+                y1 = float(line[2])
+                x2 = float(line[3])
+                y2 = float(line[4])
+
+                label_width = abs(x2-x1)
+                label_height = abs(y2-y1)
+                x_center = min(x1, x2) + label_width/2
+                y_center = min(y1, y2) + label_height/2
+
+                # Get img height and width
+                img_path = os.path.join(images_path, img_name)
+                img = Image.open(img_path)
+                img_width = img.width
+                img_height = img.height
+
+                # Convert to yolov9 annotation
+                converted_label = "0 " + str(x_center/img_width) + " " + str(y_center/img_height) + " " + str(label_width/img_width) + " " + str(label_height/img_height)
+
+                # Write annotation to file
+                label_file_name = img_name.split(".")[0] + ".txt"
+                label_file_path = os.path.join(new_labels_path, label_file_name)
+                file1 = open(label_file_path, "a")  # append mode
+                file1.write(converted_label)
+                file1.close()
 
 def draw_squares_on_img(img_path, lables_path):
     # read image
@@ -91,3 +138,7 @@ def draw_squares_repository(img_dir="imgs/", lables_dir="img_anottations/"):
 
 if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd(), 'data')
+    IMG_DIR = os.path.join(DATA_DIR, 'images', "train")
+    LABEL_DIR = os.path.join(DATA_DIR, 'labels', "train")
+    corn_labels_csv = os.path.join(DATA_DIR, 'DRONE_IMAGES_ANNOTATION.csv')
+    corn_disease_drone_images(corn_labels_csv, IMG_DIR, LABEL_DIR)
