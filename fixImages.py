@@ -65,9 +65,55 @@ def del_imgs_no_label(IMG_DIR, LABEL_DIR):
 
     print(counter)
 
+def copy_labels_imgs_to_data(path_list, DATA_DIR):
+    # Clean dirs
+    imgs_dir = os.path.join(DATA_DIR, "images", "train")
+    if os.path.exists(imgs_dir):
+        shutil.rmtree(imgs_dir)
+    os.mkdir(imgs_dir)
+
+    labels_dir = os.path.join(DATA_DIR, "labels", "train")
+    if os.path.exists(labels_dir):
+        shutil.rmtree(labels_dir)
+    os.makedirs(labels_dir)
+
+    # get all dirs
+    img_path_list = []
+    label_path_list = []
+    data_parts = ["train", "test", "valid"]
+    for path in path_list:
+        for data_part in data_parts:
+            img_path_list.append(os.path.join(path, data_part, "images"))
+            img_path_list.append(os.path.join(path, "images", data_part))
+            label_path_list.append(os.path.join(path, data_part, "labels"))
+            label_path_list.append(os.path.join(path, "labels", data_part))
+
+
+    # Copy images from all dirs to data
+    for img_path in img_path_list:
+        try:
+            img_list = os.listdir(img_path)
+            for img in img_list:
+                shutil.copy(os.path.join(img_path, img), imgs_dir)
+            print("Finished: " + str(img_path))
+        except:
+            print("No directory: " + str(img_path))
+
+    # Copy labels from all dirs to data
+    for label_path in label_path_list:
+        try:
+            label_list = os.listdir(label_path)
+            for label in label_list:
+                shutil.copy(os.path.join(label_path, label), labels_dir)
+            print("Finished: " + str(label_path))
+        except:
+            print("No directory: " + str(label_path))
+
+
 
 if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd(), 'data')
     IMG_DIR = os.path.join(DATA_DIR, 'images', "train")
     LABEL_DIR = os.path.join(DATA_DIR, 'labels', "train")
-    del_imgs_no_label(IMG_DIR, LABEL_DIR)
+    path_list = ["D:\Sola\Magisterska\SlikeDataseti\DISEASE_DETECTION\CORN\CORN_DISEASE\Maize.v5-maize-model.yolov9"]
+    copy_labels_imgs_to_data(path_list, DATA_DIR)
