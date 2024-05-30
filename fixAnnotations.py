@@ -27,7 +27,7 @@ def del_broken_files(dir, extenstion):
 
 
 # Change names of files that are too long (they are problematic lol weak os cant handle 256char len strings)
-def rename_long_name_files(DATA_DIR, max_file_name_length=120):
+def rename_long_name_files(DATA_DIR, max_file_name_length=80):
     counter = 0
     err_counter = 0
     dir_path_imgs = os.path.join(DATA_DIR, "images", "train")
@@ -237,7 +237,7 @@ def run_change_classes_to_0_1(DATA_DIR, healty_classes):
 
 if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd(), 'data')
-    # rename_long_name_files(DATA_DIR)
+    rename_long_name_files(DATA_DIR)
     each_class_count(DATA_DIR)
     count_labels_on_picture(DATA_DIR)
 

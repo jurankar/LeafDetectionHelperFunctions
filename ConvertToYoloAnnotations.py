@@ -1,4 +1,6 @@
 import csv
+import random
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import shutil
@@ -139,11 +141,11 @@ def draw_squares_on_img(img_path, lables_path):
     plt.show()
 
 def draw_squares_repository(img_dir, lables_dir, num_of_imgs=10):
-    dir_list = os.listdir(img_dir)
+    dir_list = os.listdir(lables_dir)
+    random.shuffle(dir_list)
     for idx, file in enumerate(dir_list):
-        file = file.replace(".jpg", "")
-        file = file.replace(".JPG", "")
-        draw_squares_on_img(img_dir + file + ".jpg", lables_dir + file + ".txt")
+        file = file.replace(".txt", "")
+        draw_squares_on_img(os.path.join(img_dir, file + ".jpg"), os.path.join(lables_dir, file + ".txt"))
         if idx == num_of_imgs:
             break
 
@@ -151,6 +153,6 @@ if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd(), 'data')
     IMG_DIR = os.path.join(DATA_DIR, 'images', "train")
     LABEL_DIR = os.path.join(DATA_DIR, 'labels', "train")
-    corn_labels_csv = os.path.join(DATA_DIR, 'Annotation-export.csv')
-    corn_disease_drone_images(corn_labels_csv, IMG_DIR, LABEL_DIR, "Corn Leaf Infection Dataset")
-    # draw_squares_repository(IMG_DIR, LABEL_DIR, 10)
+    # corn_labels_csv = os.path.join(DATA_DIR, 'Annotation-export.csv')
+    # corn_disease_drone_images(corn_labels_csv, IMG_DIR, LABEL_DIR, "Corn Leaf Infection Dataset")
+    draw_squares_repository(IMG_DIR, LABEL_DIR, 10)
