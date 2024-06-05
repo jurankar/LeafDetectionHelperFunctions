@@ -65,6 +65,9 @@ def del_imgs_no_label(IMG_DIR, LABEL_DIR):
 
     print(counter)
 
+"""
+This function accepts the path to a datasets (list of paths) and than copies all the images and labels to our working directory in DATA_DIR
+"""
 def copy_labels_imgs_to_data(path_list, DATA_DIR):
     # Clean dirs
     imgs_dir = os.path.join(DATA_DIR, "images", "train")
@@ -109,11 +112,21 @@ def copy_labels_imgs_to_data(path_list, DATA_DIR):
         except:
             print("No directory: " + str(label_path))
 
+"""
+This function accepts the path to a directory with datasets and than copies all the images and labels from all datasets to our working directory in DATA_DIR
+"""
+def copy_directory_labels_imgs_to_data(src_dir_path, DATA_DIR):
+    datasets = os.listdir(src_dir_path)
+    datasets_list = []
+    for dataset in datasets:
+        datasets_list.append(os.path.join(src_dir_path,dataset))
+    copy_labels_imgs_to_data(datasets_list, DATA_DIR)
+    print("FINITOOOO")
 
 
 if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd(), 'data')
     IMG_DIR = os.path.join(DATA_DIR, 'images', "train")
     LABEL_DIR = os.path.join(DATA_DIR, 'labels', "train")
-    path_list = ["D:\Sola\Magisterska\SlikeDataseti\DISEASE_DETECTION\CORN\CORN_DISEASE\Maize.v5-maize-model.yolov9"]
-    copy_labels_imgs_to_data(path_list, DATA_DIR)
+    # copy_directory_labels_imgs_to_data("D:\Sola\Magisterska\SlikeDataseti\DISEASE_DETECTION\CORN\CORN_DISEASE", DATA_DIR)
+    resize_images(DATA_DIR)
