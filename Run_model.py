@@ -1,32 +1,20 @@
-# import a utility function for loading Roboflow models
-from inference import get_model
-# import supervision to visualize our results
-import supervision as sv
-# import cv2 to helo load our image
-import cv2
+import os
+from ultralytics import YOLO
 
-# define the image url to use for inference
-image_file = "data/images/0a0d6a11-ddd6-4dac-8469-d5f65af5afca___RS_HL-0555-jpeg_frame115600v2_syn_png_jpg.rf.7f712b22edfa3d0057d83e92ed640272.jpg"
-image = cv2.imread(image_file)
 
-# load a pre-trained yolov8n model
-model = get_model(model_id="leaf-final-cnbck")
+ROOT_DIR = '.'
+DATA_DIR = os.path.join(ROOT_DIR,'datasets','data_fsb_wheat')
 
-# run inference on our chosen image, image can be a url, a numpy array, a PIL image, etc.
-results = model.infer(image)
+# Other model versions
+# model = YOLO("yolov9e.yaml" -->  https://docs.ultralytics.com/models/yolov9/#performance-on-ms-coco-dataset
 
-# load the results into the supervision Detections api
-detections = sv.Detections.from_inference(results[0].dict(by_alias=True, exclude_none=True))
+# Load Model
+# model = YOLO('yolov9c.yaml').load(os.path.join(ROOT_DIR, "runs", "detect", "train10", "weights", "last.pt"))  # build from YAML and transfer weights
 
-# create supervision annotators
-bounding_box_annotator = sv.BoundingBoxAnnotator()
-label_annotator = sv.LabelAnnotator()
+# Use the model
+model = YOLO("yolov9c.yaml")  # build a new model from scratch
+results = model.train(data=os.path.join(DATA_DIR, "config_data_fsb_wheat.yaml"), lr0=0.001, lrf=0.01, epochs=200, batch=16, optimizer="AdamW", save_period=42, dropout=0.25, degrees=90, translate=0.35, flipud=0.35, plots=True)  # train the model
 
-# annotate the image with our inference results
-annotated_image = bounding_box_annotator.annotate(
-    scene=image, detections=detections)
-annotated_image = label_annotator.annotate(
-    scene=annotated_image, detections=detections)
-
-# display the image
-sv.plot_image(annotated_image)
+# Resume learning
+# model = YOLO(os.path.join(ROOT_DIR, "runs", "detect", "train23", "weights", "last.pt"))  # load a model
+# results = model.train(resume=True)
