@@ -54,37 +54,41 @@ def change_classes_to_0(DATA_DIR):
     rename_long_name_files(DATA_DIR)  # change file names
     # start algo
     counter = 0
-    for dir_name in DIR_NAMES:
+    dir_names = ["train/", "test/", "valid/"]
+    for dir_name in dir_names:
         source_path = os.path.join(DATA_DIR, "labels", dir_name)
-        dir_list = os.listdir(source_path)
-        print("len dir_list: " + str(len(dir_list)))
-        for idx, file_path in enumerate(dir_list):
-            if idx % 2000 == 0:
-                print(idx)
-            # read file and than write to it
-            file_name = file_path.split("/")[-1]
-            file_source_path = source_path + file_name
-            f = open(file_source_path, "r")
-            f_lines = f.readlines()
-            f.close()
-            f2 = open(file_source_path, "w")
+        try:
+            dir_list = os.listdir(source_path)
+            print("len dir_list: " + str(len(dir_list)))
+            for idx, file_path in enumerate(dir_list):
+                if idx % 300 == 0:
+                    print(idx)
+                # read file and than write to it
+                file_name = file_path.split("/")[-1]
+                file_source_path = source_path + file_name
+                f = open(file_source_path, "r")
+                f_lines = f.readlines()
+                f.close()
+                f2 = open(file_source_path, "w")
 
-            # overwrite all annotations to class 0
-            for idx, line in enumerate(f_lines):
-                annotation = line.split(" ")
-                if annotation[0] != '0':
-                    counter += 1
-                annotation[0] = '0'
-                annotation_fixed = ""
+                # overwrite all annotations to class 0
+                for idx, line in enumerate(f_lines):
+                    annotation = line.split(" ")
+                    if annotation[0] != '0':
+                        counter += 1
+                    annotation[0] = '0'
+                    annotation_fixed = ""
 
-                # write annotation to file
-                for idx, i in enumerate(annotation):
-                    if idx < len(annotation) - 1:
-                        annotation_fixed += i + " "
-                    else:
-                        annotation_fixed += i
-                f2.write(annotation_fixed)
-            f2.close()
+                    # write annotation to file
+                    for idx, i in enumerate(annotation):
+                        if idx < len(annotation) - 1:
+                            annotation_fixed += i + " "
+                        else:
+                            annotation_fixed += i
+                    f2.write(annotation_fixed)
+                f2.close()
+        except:
+            print("No directory: " + str(source_path))
     print("Changed classes for :" + str(counter) + " annotations")
 
 
@@ -237,11 +241,15 @@ def run_change_classes_to_0_1(DATA_DIR, healty_classes):
 
 if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd(), 'data')
-    run_change_classes_to_0_1(DATA_DIR, [])
-    # each_class_count(DATA_DIR)
+    DATA_DIR_target = os.path.join(os.getcwd(), 'data_split')
+    # run_change_classes_to_0_1(DATA_DIR, [])
+    change_classes_to_0(DATA_DIR_target)
+
+    each_class_count(DATA_DIR)
     count_labels_on_picture(DATA_DIR)
 
     # healty_classes = [3]
     # run_change_classes_to_0_1(DATA_DIR, healty_classes)
     # del_images_bellow_n_labels(DATA_DIR, 3)
+
 

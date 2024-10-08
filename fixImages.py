@@ -186,4 +186,4 @@ if __name__ == '__main__':
     LABEL_DIR = os.path.join(DATA_DIR, 'labels', "train")
     # copy_directory_labels_imgs_to_data("C:\\Users\\Jan\\Downloads\\fhb_wheat_datasets", DATA_DIR)
     # resize_images(DATA_DIR)
-    split_dataset(DATA_DIR, DATA_DIR_target, dataset_split=[70, 20, 10])
+    # split_dataset(DATA_DIR, DATA_DIR_target, dataset_split=[70, 20, 10])
