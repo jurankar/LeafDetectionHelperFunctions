@@ -243,7 +243,7 @@ if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd(), 'data')
     DATA_DIR_target = os.path.join(os.getcwd(), 'data_split')
     # run_change_classes_to_0_1(DATA_DIR, [])
-    change_classes_to_0(DATA_DIR_target)
+    # change_classes_to_0(DATA_DIR_target)
 
     each_class_count(DATA_DIR)
     count_labels_on_picture(DATA_DIR)

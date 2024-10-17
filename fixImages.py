@@ -22,6 +22,7 @@ def min_max_img_size(IMG_DIR):
             sizes[3] = img.height
     print(sizes)
 
+#  This function resizes all images in the given directory to 640x640 and puts them in a new directory named train640
 def resize_images(DATA_DIR):
     # Set up dirs
     err_counter = 0
@@ -70,7 +71,15 @@ def del_imgs_no_label(IMG_DIR, LABEL_DIR):
 This function accepts the path to a datasets (list of paths) and than copies all the images and labels to our working directory in DATA_DIR
 """
 def copy_labels_imgs_to_data(path_list, DATA_DIR):
-    # Clean dirs
+    # Make basic folders
+    imgs_dir = os.path.join(DATA_DIR, "images")
+    if os.path.exists(imgs_dir):
+        shutil.rmtree(imgs_dir)
+    os.mkdir(imgs_dir)
+    labels_dir = os.path.join(DATA_DIR, "labels")
+    if os.path.exists(labels_dir):
+        shutil.rmtree(labels_dir)
+    os.mkdir(labels_dir)
     imgs_dir = os.path.join(DATA_DIR, "images", "train")
     if os.path.exists(imgs_dir):
         shutil.rmtree(imgs_dir)
@@ -181,9 +190,13 @@ def split_dataset(DATA_DIR_SRC, DATA_DIR_TARGET, dataset_split=[70, 20, 10]):
 
 if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd(), 'data')
-    DATA_DIR_target = os.path.join(os.getcwd(), 'data_split')
     IMG_DIR = os.path.join(DATA_DIR, 'images', "train")
     LABEL_DIR = os.path.join(DATA_DIR, 'labels', "train")
-    # copy_directory_labels_imgs_to_data("C:\\Users\\Jan\\Downloads\\fhb_wheat_datasets", DATA_DIR)
+
+    #dataset_dir = os.path.join("d:", "Magisterska", "SlikeDataseti", "FUSSARIUM-wheat", "Test_CRA")
+    # copy_labels_imgs_to_data([dataset_dir], DATA_DIR)
     # resize_images(DATA_DIR)
-    # split_dataset(DATA_DIR, DATA_DIR_target, dataset_split=[70, 20, 10])
+
+
+    DATA_DIR_target = os.path.join(os.getcwd(), 'data_split')
+    split_dataset(DATA_DIR, DATA_DIR_target, dataset_split=[70, 20, 10])
