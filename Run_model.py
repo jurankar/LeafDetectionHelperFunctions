@@ -13,7 +13,7 @@ DATA_DIR = os.path.join(ROOT_DIR,'datasets','data_fsb_wheat')
 
 # Use the model
 model = YOLO("yolov9c.yaml")  # build a new model from scratch
-results = model.train(data=os.path.join(DATA_DIR, "config_data_fsb_wheat.yaml"), lr0=0.001, lrf=0.01, epochs=500, patience=50, batch=16, optimizer="AdamW", save_period=42, dropout=0.25, degrees=90, translate=0.35, flipud=0.35, plots=True)  # train the model
+results = model.train(data=os.path.join(DATA_DIR, "config_data_fsb_wheat.yaml"), lr0=0.001, lrf=0.001, epochs=500, patience=50, batch=16, save_period=42, dropout=0.25, degrees=90, translate=0.5, perspective=0.0005, flipud=0.3, mosaic=0.3, plots=True)  # train the model
 
 # Resume learning
 # model = YOLO(os.path.join(ROOT_DIR, "runs", "detect", "train23", "weights", "last.pt"))  # load a model
