@@ -276,6 +276,8 @@ def delete_annotations_with_class_id(DATA_DIR, target_class_id):
 
 
 
+import os
+
 def delete_annotations_with_class_id(DATA_DIR, target_class_id):
     """
     Deletes all annotations with a specific class ID in annotation files.
@@ -284,35 +286,42 @@ def delete_annotations_with_class_id(DATA_DIR, target_class_id):
         DATA_DIR (str): Root directory containing subdirectories with annotation files, e.g., labels folder with subfolders of test, train, valid.
         target_class_id (int): The class ID of annotations to delete.
     """
-    DATA_DIR = DATA_DIR + "/labels"
+    DATA_DIR = os.path.join(DATA_DIR, "labels")
     counter = 0
+
     for dir_name in os.listdir(DATA_DIR):
         dir_path = os.path.join(DATA_DIR, dir_name)
         if not os.path.isdir(dir_path):
             continue
 
-        if os.path.isdir(dir_path):
-            annotations_files_list = os.listdir(dir_path)
-            if annotations_files_list and annotations_files_list[0].split(".")[-1] == "txt":
-                for file_name in annotations_files_list:
-                    file_source_path = os.path.join(dir_path, file_name)
+        for file_name in os.listdir(dir_path):
+            if not file_name.endswith(".txt"):
+                continue
 
-                    # Read the file lines
-                    with open(file_source_path, "r") as f:
-                        f_lines = f.readlines()
+            file_source_path = os.path.join(dir_path, file_name)
 
-                    # Rewrite the file without the target class ID
-                    with open(file_source_path, "w") as f2:
-                        for line in f_lines:
-                            annotation = line.split(" ")
-                            annotation_class = int(annotation[0])
-                            if annotation_class != target_class_id:
-                                # Reconstruct the annotation line
-                                annotation_fixed = " ".join(annotation)
-                            else:
-                                counter+=1
-                                f2.write(annotation_fixed)
-    print("FINISHED DELETE_ANNOTATIONS_WITH_CLASS_ID: ", target_class_id,". Number of deleted annotations: ", counter)
+            # Read the file lines
+            with open(file_source_path, "r") as f:
+                f_lines = f.readlines()
+
+            # Filter out lines containing the target class ID
+            new_lines = []
+            for line in f_lines:
+                annotation = line.strip().split(" ")
+                annotation_class = int(annotation[0])
+
+                if annotation_class != target_class_id:
+                    new_lines.append(line)
+                else:
+                    counter += 1
+
+            # Rewrite the file only if changes were made
+            if len(new_lines) != len(f_lines):
+                with open(file_source_path, "w") as f2:
+                    f2.writelines(new_lines)
+
+    print(f"FINISHED DELETE_ANNOTATIONS_WITH_CLASS_ID: {target_class_id}. Number of deleted annotations: {counter}")
+
 
 
 
@@ -328,7 +337,9 @@ def change_class_id(DATA_DIR, old_class_id, new_class_id):
     counter = 0
     for dir_name in os.listdir(DATA_DIR):
         dir_path = os.path.join(DATA_DIR, dir_name)
+        print("dir path: ", dir_path)
         if not os.path.isdir(dir_path):
+            print("dir path EMPTY: ", dir_path)
             continue
 
         if os.path.isdir(dir_path):
@@ -357,11 +368,14 @@ def change_class_id(DATA_DIR, old_class_id, new_class_id):
 
 
 if __name__ == '__main__':
-    DATA_DIR = os.path.join(os.getcwd(), 'data_fsb_wheat_no_undetermined')
-    DATA_DIR_target = os.path.join(os.getcwd(), 'data_split')
-    #delete_annotations_with_class_id(DATA_DIR, 0)
-    change_class_id(DATA_DIR, 1, 0)
+    DATA_DIR = os.path.join(os.getcwd(), 'data')
+    # DATA_DIR_target = os.path.join(os.getcwd(), 'data_split')
+    each_class_count(DATA_DIR)
+    delete_annotations_with_class_id(DATA_DIR, 0)
+    delete_annotations_with_class_id(DATA_DIR, 1)
+    delete_annotations_with_class_id(DATA_DIR, 3)
     change_class_id(DATA_DIR, 2, 1)
+    change_class_id(DATA_DIR, 4, 0)
     each_class_count(DATA_DIR)
 
 

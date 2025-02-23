@@ -189,14 +189,18 @@ def split_dataset(DATA_DIR_SRC, DATA_DIR_TARGET, dataset_split=[70, 20, 10]):
 
 
 if __name__ == '__main__':
-    DATA_DIR = os.path.join(os.getcwd(), 'data')
-    IMG_DIR = os.path.join(DATA_DIR, 'images', "train")
-    LABEL_DIR = os.path.join(DATA_DIR, 'labels', "train")
+    DATA_DIR = os.path.join(os.getcwd())
+    # IMG_DIR = os.path.join(DATA_DIR, 'images', "train")
+    # LABEL_DIR = os.path.join(DATA_DIR, 'labels', "train")
+    dataset_dir = os.path.join(DATA_DIR, "coffe_ripe_unripe_segmentation")
+    DATA_DIR_target = os.path.join(os.getcwd(), 'data')
+    DATA_DIR_target_split = os.path.join(DATA_DIR, 'data_split')
+    # Create directories if they don't exist
+    if not os.path.exists(DATA_DIR_target):
+        os.makedirs(DATA_DIR_target)
+    if not os.path.exists(DATA_DIR_target_split):
+        os.makedirs(DATA_DIR_target_split)
 
-    #dataset_dir = os.path.join("d:", "Magisterska", "SlikeDataseti", "FUSSARIUM-wheat", "Test_CRA")
-    # copy_labels_imgs_to_data([dataset_dir], DATA_DIR)
-    # resize_images(DATA_DIR)
-
-
-    DATA_DIR_target = os.path.join(os.getcwd(), 'data_split')
-    split_dataset(DATA_DIR, DATA_DIR_target, dataset_split=[70, 20, 10])
+    copy_labels_imgs_to_data([dataset_dir], DATA_DIR_target)
+    # resize_images(DATA_DIR_target)
+    # split_dataset(DATA_DIR_target, DATA_DIR_target_split, dataset_split=[70, 20, 10])
