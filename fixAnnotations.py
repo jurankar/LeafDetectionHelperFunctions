@@ -448,6 +448,30 @@ def each_class_count(DATA_DIR):
     print("FINISHED ANNOTATION LABELS COUNT")
     return annotation_lables_count
 
+
+def each_class_count_single_dir(dir_path):
+    annotation_labels_count = {}
+    if os.path.isdir(dir_path):
+        dir_list = os.listdir(dir_path)
+        if dir_list and dir_list[0].split(".")[-1] == "txt":
+            for file_path in dir_list:
+                file_name = file_path.split("/")[-1]
+                file_source_path = os.path.join(dir_path, file_name)
+                with open(file_source_path, "r") as f:
+                    f_lines = f.readlines()
+                    for line in f_lines:
+                        annotation_description = line.split(" ")
+                        annotation_label = int(annotation_description[0])
+                        if annotation_label not in annotation_labels_count:
+                            annotation_labels_count[annotation_label] = 1
+                        else:
+                            annotation_labels_count[annotation_label] += 1
+
+    print("FINISHED ANNOTATION LABELS COUNT: ", annotation_labels_count, "    for path: ", dir_path)
+    return annotation_labels_count
+
+
+
 # COUNT NUMBER OF LABELS PER PICTURE (prints dict)
 def count_labels_on_picture(DATA_DIR):
     LABELS_DIR = os.path.join(DATA_DIR, "labels", "train")
@@ -692,7 +716,7 @@ if __name__ == '__main__':
     if not os.path.exists(DATA_DIR_target_split):
         os.makedirs(DATA_DIR_target_split)
 
-
+    """
     copy_labels_imgs_to_data([dataset_dir], DATA_DIR_target)
     # resize_images(DATA_DIR_target)
     
@@ -709,6 +733,8 @@ if __name__ == '__main__':
     equalize_classes(DATA_DIR_DATA)
     # split_dataset(DATA_DIR_target, DATA_DIR_target_split, dataset_split=[70, 20, 10])
     split_dataset_by_number(DATA_DIR_target, DATA_DIR_target_split, valid_num=100, test_num=100)
-    each_class_count(DATA_DIR_DATA)
+    """
+    each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "valid"))
+    each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "test"))
 
 
