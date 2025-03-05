@@ -702,6 +702,44 @@ def equalize_classes(DATA_DIR):
 
 
 
+def equalize_classes_single_dir(dir_path):
+    class_counts = each_class_count_single_dir(dir_path)
+    min_class_count = min(class_counts.values())
+    print(f"Equalizing classes to: {min_class_count} annotations per class")
+
+    annotations_to_delete = {label: [] for label in class_counts.keys()}
+
+    if os.path.isdir(dir_path):
+        dir_list = os.listdir(dir_path)
+        if dir_list and dir_list[0].split(".")[-1] == "txt":
+            for file_path in dir_list:
+                file_source_path = os.path.join(dir_path, file_path)
+                with open(file_source_path, "r") as f:
+                    f_lines = f.readlines()
+
+                for line in f_lines:
+                    annotation = line.split(" ")
+                    annotation_class = int(annotation[0])
+                    annotations_to_delete[annotation_class].append((file_source_path, line))
+
+    # Shuffle and delete excess annotations
+    for class_id, annotations in annotations_to_delete.items():
+        if len(annotations) > min_class_count:
+            random.shuffle(annotations)
+            excess_annotations = annotations[min_class_count:]
+            for file_source_path, line in excess_annotations:
+                with open(file_source_path, "r") as f:
+                    lines = f.readlines()
+                with open(file_source_path, "w") as f:
+                    for l in lines:
+                        if l != line:
+                            f.write(l)
+            print(f"Deleted {len(excess_annotations)} annotations of class {class_id}")
+
+    print("FINISHED EQUALIZING CLASSES")
+    each_class_count_single_dir(dir_path)
+
+
 if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd())
     # IMG_DIR = os.path.join(DATA_DIR, 'images', "train")
@@ -716,7 +754,6 @@ if __name__ == '__main__':
     if not os.path.exists(DATA_DIR_target_split):
         os.makedirs(DATA_DIR_target_split)
 
-    """
     copy_labels_imgs_to_data([dataset_dir], DATA_DIR_target)
     # resize_images(DATA_DIR_target)
     
@@ -730,10 +767,13 @@ if __name__ == '__main__':
     each_class_count(DATA_DIR_DATA)
 
 
-    equalize_classes(DATA_DIR_DATA)
+    # equalize_classes(DATA_DIR_DATA)
+    
     # split_dataset(DATA_DIR_target, DATA_DIR_target_split, dataset_split=[70, 20, 10])
     split_dataset_by_number(DATA_DIR_target, DATA_DIR_target_split, valid_num=100, test_num=100)
-    """
+    each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "train"))
+    equalize_classes_single_dir(os.path.join(DATA_DIR_target_split, "labels", "train")) # TOdo untested
+    each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "train"))
     each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "valid"))
     each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "test"))
 
