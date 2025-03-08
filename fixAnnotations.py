@@ -740,14 +740,47 @@ def equalize_classes_single_dir(dir_path):
     each_class_count_single_dir(dir_path)
 
 
+def delete_images_with_empty_annotations(DATA_DIR):
+    """
+    Deletes images that have an empty annotation file and also removes the empty annotation file.
+    Args:
+        DATA_DIR (str): Root directory containing 'images' and 'labels' subdirectories.
+    """
+    labels_dir = os.path.join(DATA_DIR, "labels")
+    images_dir = os.path.join(DATA_DIR, "images")
+    if not os.path.exists(labels_dir) or not os.path.exists(images_dir):
+        print("Labels or Images directory does not exist!")
+        return
+    deleted_count = 0
+
+    for split in ["train", "valid", "test"]:
+        label_split_dir = os.path.join(labels_dir, split)
+        image_split_dir = os.path.join(images_dir, split)
+        if not os.path.exists(label_split_dir) or not os.path.exists(image_split_dir):
+            continue
+        for annotation_file in os.listdir(label_split_dir):
+            annotation_path = os.path.join(label_split_dir, annotation_file)
+            if os.path.getsize(annotation_path) == 0:
+                image_name = os.path.splitext(annotation_file)[
+                                 0] + ".jpg"  # Adjust for different image formats if needed
+                image_path = os.path.join(image_split_dir, image_name)
+                try:
+                    os.remove(annotation_path)
+                    if os.path.exists(image_path):
+                        os.remove(image_path)
+                    deleted_count += 1
+                except Exception as e:
+                    print(f"Error deleting {annotation_path} or {image_path}: {e}")
+    print(f"Deleted {deleted_count} empty annotations and their corresponding images.")
+
+
 if __name__ == '__main__':
     DATA_DIR = os.path.join(os.getcwd())
     # IMG_DIR = os.path.join(DATA_DIR, 'images', "train")
     # LABEL_DIR = os.path.join(DATA_DIR, 'labels', "train")
     dataset_dir = os.path.join(DATA_DIR, "guava")
-    DATA_DIR_target = os.path.join(os.getcwd(), 'data')
+    DATA_DIR_target = os.path.join(os.getcwd(), 'data') # Also DATA_DIR_DATA before
     DATA_DIR_target_split = os.path.join(DATA_DIR, 'data_split')
-    DATA_DIR_DATA = os.path.join(os.getcwd(), 'data')
     # Create directories if they don't exist
     if not os.path.exists(DATA_DIR_target):
         os.makedirs(DATA_DIR_target)
@@ -756,23 +789,26 @@ if __name__ == '__main__':
 
     copy_labels_imgs_to_data([dataset_dir], DATA_DIR_target)
     # resize_images(DATA_DIR_target)
-    
-    each_class_count(DATA_DIR_DATA)
-    delete_annotations_with_class_id(DATA_DIR_DATA, 1)
-    delete_annotations_with_class_id(DATA_DIR_DATA, 3)
-    delete_annotations_with_class_id(DATA_DIR_DATA, 4)
-    delete_annotations_with_class_id(DATA_DIR_DATA, 5)
-    change_class_id(DATA_DIR_DATA, 0, 1)
-    change_class_id(DATA_DIR_DATA, 2, 0)
-    each_class_count(DATA_DIR_DATA)
 
+    # KEEP ONLY 1 Sick and 1 Healty class
+    each_class_count(DATA_DIR_target)
+    delete_annotations_with_class_id(DATA_DIR_target, 1)
+    delete_annotations_with_class_id(DATA_DIR_target, 3)
+    delete_annotations_with_class_id(DATA_DIR_target, 4)
+    delete_annotations_with_class_id(DATA_DIR_target, 5)
+    change_class_id(DATA_DIR_target, 0, 1)
+    change_class_id(DATA_DIR_target, 2, 0)
+    each_class_count(DATA_DIR_target)
 
-    # equalize_classes(DATA_DIR_DATA)
-    
+    # Equalize classes (so they are both represented in the same numbers) and delete the ones that are empty (after equalising, deleteing all the other classes etc)
+    equalize_classes(DATA_DIR_target)
+    delete_images_with_empty_annotations(DATA_DIR_target)
+
+    # Split the dataset and count number of each class annotations in each split (train, test,val)
     # split_dataset(DATA_DIR_target, DATA_DIR_target_split, dataset_split=[70, 20, 10])
     split_dataset_by_number(DATA_DIR_target, DATA_DIR_target_split, valid_num=100, test_num=100)
-    each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "train"))
-    equalize_classes_single_dir(os.path.join(DATA_DIR_target_split, "labels", "train")) # TOdo untested
+    # each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "train"))
+    # equalize_classes_single_dir(os.path.join(DATA_DIR_target_split, "labels", "train")) # TOdo untested
     each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "train"))
     each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "valid"))
     each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "test"))
