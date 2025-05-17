@@ -112,6 +112,16 @@ def corn_disease_drone_images(csv_file_path, images_path, new_labels_path, data_
         print(num_of_clases)
 
 def draw_squares_on_img(img_path, lables_path):
+
+
+    # read lables
+    lables = []
+    f = open(lables_path, "r")
+    f_lines = f.readlines()
+    f.close()
+    if len(f_lines) == 0:
+        return
+
     # read image
     im = Image.open(img_path)
     img_width, img_height = im.size
@@ -120,12 +130,6 @@ def draw_squares_on_img(img_path, lables_path):
     # Create figure and axes
     fig, ax = plt.subplots()
     ax.imshow(im)
-
-    # read lables
-    lables = []
-    f = open(lables_path, "r")
-    f_lines = f.readlines()
-    f.close()
 
     for idx, line in enumerate(f_lines):
       annotation = line.replace("\n", "").split(" ")
@@ -150,9 +154,9 @@ def draw_squares_repository(img_dir, lables_dir, num_of_imgs=10):
             break
 
 if __name__ == '__main__':
-    DATA_DIR = os.path.join(os.getcwd(), 'data')
+    DATA_DIR = os.path.join(os.getcwd(), 'data_split')
     IMG_DIR = os.path.join(DATA_DIR, 'images', "train")
     LABEL_DIR = os.path.join(DATA_DIR, 'labels', "train")
     # corn_labels_csv = os.path.join(DATA_DIR, 'Annotation-export.csv')
     # corn_disease_drone_images(corn_labels_csv, IMG_DIR, LABEL_DIR, "Corn Leaf Infection Dataset")
-    draw_squares_repository(IMG_DIR, LABEL_DIR, 10)
+    draw_squares_repository(IMG_DIR, LABEL_DIR, 100)

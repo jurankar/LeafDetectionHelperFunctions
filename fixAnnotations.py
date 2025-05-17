@@ -3,6 +3,10 @@ import shutil
 import random
 
 from PIL import Image
+import yaml
+import cv2
+import pandas as pd
+from yaml.representer import SafeRepresenter
 
 def min_max_img_size(IMG_DIR):
     dir_list = os.listdir(IMG_DIR)
@@ -420,8 +424,6 @@ def change_classes_to_0_1(DATA_DIR, healty_classes):
                         f2.close()
     print("FINISHED CHANGE_CLASSES_0_1")
 
-import os
-
 # Counts how much of each class are in labels (how many times each class appears)
 def each_class_count(DATA_DIR):
     annotation_lables_count = {}
@@ -531,7 +533,6 @@ def run_change_classes_to_0_1(DATA_DIR, healty_classes):
     change_classes_to_0_1(DATA_DIR, healty_classes)
     each_class_count(DATA_DIR)
 
-import os
 
 def delete_annotations_with_class_id(DATA_DIR, target_class_id):
     """
@@ -567,8 +568,6 @@ def delete_annotations_with_class_id(DATA_DIR, target_class_id):
     print("FINISHED DELETE_ANNOTATIONS_WITH_CLASS_ID")
 
 
-
-import os
 
 def delete_annotations_with_class_id(DATA_DIR, target_class_id):
     """
@@ -742,43 +741,215 @@ def equalize_classes_single_dir(dir_path):
 
 def delete_images_with_empty_annotations(DATA_DIR):
     """
-    Deletes images that have an empty annotation file and also removes the empty annotation file.
+    Deletes empty annotation files and their corresponding images from a YOLO-style dataset structure.
+
     Args:
-        DATA_DIR (str): Root directory containing 'images' and 'labels' subdirectories.
+        DATA_DIR (str): Root directory containing 'images' and 'labels' subdirectories, each with 'train', 'val', 'test'.
     """
     labels_dir = os.path.join(DATA_DIR, "labels")
     images_dir = os.path.join(DATA_DIR, "images")
+
     if not os.path.exists(labels_dir) or not os.path.exists(images_dir):
-        print("Labels or Images directory does not exist!")
+        print("Labels or Images directory does not exist.")
         return
+
     deleted_count = 0
 
     for split in ["train", "valid", "test"]:
         label_split_dir = os.path.join(labels_dir, split)
         image_split_dir = os.path.join(images_dir, split)
+
         if not os.path.exists(label_split_dir) or not os.path.exists(image_split_dir):
             continue
+
         for annotation_file in os.listdir(label_split_dir):
+            if not annotation_file.endswith(".txt"):
+                continue
+
             annotation_path = os.path.join(label_split_dir, annotation_file)
+
             if os.path.getsize(annotation_path) == 0:
-                image_name = os.path.splitext(annotation_file)[
-                                 0] + ".jpg"  # Adjust for different image formats if needed
+                image_name = os.path.splitext(annotation_file)[0] + ".jpg"
                 image_path = os.path.join(image_split_dir, image_name)
+
                 try:
                     os.remove(annotation_path)
                     if os.path.exists(image_path):
                         os.remove(image_path)
                     deleted_count += 1
+                    # print(f"Deleted: {annotation_path} and {image_path}")
                 except Exception as e:
                     print(f"Error deleting {annotation_path} or {image_path}: {e}")
+
     print(f"Deleted {deleted_count} empty annotations and their corresponding images.")
 
 
-if __name__ == '__main__':
-    DATA_DIR = os.path.join(os.getcwd())
-    # IMG_DIR = os.path.join(DATA_DIR, 'images', "train")
-    # LABEL_DIR = os.path.join(DATA_DIR, 'labels', "train")
-    dataset_dir = os.path.join(DATA_DIR, "guava")
+
+def edit_yaml_file(data_dir, DATA_DIR_target_split):
+    class QuotedString(str):
+        pass
+
+    class InlineList(list):
+        pass
+
+    def quoted_str_representer(dumper, data):
+        return dumper.represent_scalar('tag:yaml.org,2002:str', data, style="'")
+
+    def inline_list_representer(dumper, data):
+        return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
+
+    yaml.add_representer(QuotedString, quoted_str_representer, Dumper=yaml.SafeDumper)
+    yaml.add_representer(InlineList, inline_list_representer, Dumper=yaml.SafeDumper)
+
+    yaml_files = [f for f in os.listdir(data_dir) if f.endswith('.yaml')]
+    if len(yaml_files) != 1:
+        raise ValueError("Directory must contain exactly one .yaml file.")
+
+    old_file_name = yaml_files[0]
+    old_file_path = os.path.join(data_dir, old_file_name)
+    dir_name = os.path.basename(os.path.normpath(data_dir))
+    new_file_name = f"config_{dir_name}.yaml"
+    new_file_path = os.path.join(DATA_DIR_target_split, new_file_name)
+
+    base_path = QuotedString(f"/content/gdrive/My Drive/Magisterska/YoloHistogramsModels/datasets/{dir_name}")
+
+    with open(old_file_path, 'r') as file:
+        data = yaml.safe_load(file)
+
+    names_list = InlineList([QuotedString(name) for name in data.get('names', [])])
+
+    updated_data = {
+        'path': base_path,
+        'train': 'images/train',
+        'val': 'images/valid',
+        'test': 'images/test',
+        'nc': 2,
+        'names': names_list,
+        'roboflow': data.get('roboflow'),
+    }
+
+    os.makedirs(DATA_DIR_target_split, exist_ok=True)
+
+    with open(new_file_path, 'w') as file:
+        yaml.dump(updated_data, file, sort_keys=False, Dumper=yaml.SafeDumper)
+
+    print(f"Processed and saved to: {new_file_path}")
+
+def convert_all_segmentations_to_bboxes(root_dir):
+    labels_dir = os.path.join(root_dir, "labels")
+    bbox_dir = os.path.join(root_dir, "labels_bbox")
+
+    subsets = ["train", "valid", "test"]
+
+    for subset in subsets:
+        subset_input_dir = os.path.join(labels_dir, subset)
+        subset_output_dir = os.path.join(bbox_dir, subset)
+
+        if not os.path.exists(subset_input_dir):
+            print(f"Skipping missing subset: {subset_input_dir}")
+            continue
+
+        os.makedirs(subset_output_dir, exist_ok=True)
+
+        for filename in os.listdir(subset_input_dir):
+            if not filename.endswith(".txt"):
+                continue
+
+            input_path = os.path.join(subset_input_dir, filename)
+            output_path = os.path.join(subset_output_dir, filename)
+
+            with open(input_path, 'r') as infile, open(output_path, 'w') as outfile:
+                for line in infile:
+                    parts = list(map(float, line.strip().split()))
+                    class_id = int(parts[0])
+                    coords = parts[1:]
+
+                    if len(coords) % 2 != 0:
+                        print(f"Skipping malformed annotation in {input_path}")
+                        continue
+
+                    x_coords = coords[::2]
+                    y_coords = coords[1::2]
+
+                    x_min = min(x_coords)
+                    x_max = max(x_coords)
+                    y_min = min(y_coords)
+                    y_max = max(y_coords)
+
+                    x_center = (x_min + x_max) / 2
+                    y_center = (y_min + y_max) / 2
+                    width = x_max - x_min
+                    height = y_max - y_min
+
+                    outfile.write(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n")
+
+    print(f"BBox conversion complete. Output stored in: {bbox_dir}")
+
+
+def convert_yolo_annotations_to_ssd_csv(root_dir, output_csv="ssd_annotations.csv", image_ext=".jpg"):
+    labels_dir = os.path.join(root_dir, "labels_bbox")
+    images_dir = os.path.join(root_dir, "images")
+    subsets = ["train", "valid", "test"]
+
+    data_rows = []
+
+    for subset in subsets:
+        label_subset_dir = os.path.join(labels_dir, subset)
+        image_subset_dir = os.path.join(images_dir, subset)
+
+        if not os.path.exists(label_subset_dir):
+            print(f"Skipping missing subset: {label_subset_dir}")
+            continue
+
+        for label_file in os.listdir(label_subset_dir):
+            if not label_file.endswith(".txt"):
+                continue
+
+            txt_path = os.path.join(label_subset_dir, label_file)
+            image_name = label_file.replace(".txt", image_ext)
+            image_path = os.path.join(image_subset_dir, image_name)
+
+            if not os.path.exists(image_path):
+                print(f"Image not found for {txt_path}, skipping...")
+                continue
+
+            image = cv2.imread(image_path)
+            if image is None:
+                print(f"Could not read image: {image_path}")
+                continue
+
+            height, width = image.shape[:2]
+
+            with open(txt_path, 'r') as f:
+                for line in f:
+                    parts = line.strip().split()
+                    if len(parts) != 5:
+                        continue  # Malformed line
+
+                    class_id = int(parts[0])
+                    x_center, y_center, box_width, box_height = map(float, parts[1:])
+
+                    # Convert to absolute corner coordinates
+                    xmin = (x_center - box_width / 2) * width
+                    ymin = (y_center - box_height / 2) * height
+                    xmax = (x_center + box_width / 2) * width
+                    ymax = (y_center + box_height / 2) * height
+
+                    data_rows.append([
+                        os.path.join(image_subset_dir, image_name),
+                        width, height, class_id,
+                        xmin, ymin, xmax, ymax
+                    ])
+
+    # Create dataframe and save as CSV
+    df = pd.DataFrame(data_rows, columns=[
+        "filename", "width", "height", "class_id", "xmin", "ymin", "xmax", "ymax"
+    ])
+    df.to_csv(output_csv, index=False)
+    print(f"YOLO → SSD CSV conversion complete. Output: {output_csv}")
+
+
+def preapre_dataset_for_use(dataset_dir):
     DATA_DIR_target = os.path.join(os.getcwd(), 'data') # Also DATA_DIR_DATA before
     DATA_DIR_target_split = os.path.join(DATA_DIR, 'data_split')
     # Create directories if they don't exist
@@ -790,7 +961,9 @@ if __name__ == '__main__':
     copy_labels_imgs_to_data([dataset_dir], DATA_DIR_target)
     # resize_images(DATA_DIR_target)
 
-    # KEEP ONLY 1 Sick and 1 Healty class
+    # KEEP ONLY 1 Sick and 1 Healty class --> deleting useless classes and switching other classes
+    each_class_count(DATA_DIR_target)
+    """
     each_class_count(DATA_DIR_target)
     delete_annotations_with_class_id(DATA_DIR_target, 1)
     delete_annotations_with_class_id(DATA_DIR_target, 3)
@@ -798,19 +971,29 @@ if __name__ == '__main__':
     delete_annotations_with_class_id(DATA_DIR_target, 5)
     change_class_id(DATA_DIR_target, 0, 1)
     change_class_id(DATA_DIR_target, 2, 0)
+    """
     each_class_count(DATA_DIR_target)
 
     # Equalize classes (so they are both represented in the same numbers) and delete the ones that are empty (after equalising, deleteing all the other classes etc)
-    equalize_classes(DATA_DIR_target)
-    delete_images_with_empty_annotations(DATA_DIR_target)
+    # equalize_classes(DATA_DIR_target)
+    # delete_images_with_empty_annotations(DATA_DIR_target)
 
     # Split the dataset and count number of each class annotations in each split (train, test,val)
     # split_dataset(DATA_DIR_target, DATA_DIR_target_split, dataset_split=[70, 20, 10])
     split_dataset_by_number(DATA_DIR_target, DATA_DIR_target_split, valid_num=100, test_num=100)
-    # each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "train"))
-    # equalize_classes_single_dir(os.path.join(DATA_DIR_target_split, "labels", "train")) # TOdo untested
     each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "train"))
     each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "valid"))
     each_class_count_single_dir(os.path.join(DATA_DIR_target_split, "labels", "test"))
+
+    # Correct the yaml file
+    edit_yaml_file(dataset_dir, DATA_DIR_target_split)
+
+if __name__ == '__main__':
+    DATA_DIR = os.path.join(os.getcwd())
+    dataset_dir = os.path.join(DATA_DIR, "wheathead_detection")  # --> FILE FROM ROBOFLOW
+    # preapre_dataset_for_use(dataset_dir)
+    convert_yolo_annotations_to_ssd_csv("wheathead_detection")
+    # convert_all_segmentations_to_bboxes("data_split")
+
 
 
